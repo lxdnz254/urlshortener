@@ -38,46 +38,36 @@ app.get("/api/hello", function (req, res) {
 The testable api starts here
 */
 const dns = require('dns')
-const dnsOptions = {
-  family: 6,
-  hints: dns.ADDRCONFIG | dns.V4MAPPED,
-};
 
-var isValidHost = (host) => {
-  dns.lookup(host, dnsOptions, (err, address, family) => {
-    console.log('address: %j family: IPv%s', address, family)
-    if (err) return false
-    return true
-  });   
+var hostnameExists = (hostname) => {
+  return new Promise((resolve) => {
+    dns.lookup(hostname, (error) => resolve({hostname, exists: !error}));
+  });
 }
 
+// Save the Url if its is valid
 var saveNewUrl = db.createAndSaveUrl
 app.post("/api/shorturl/new", (req, res)=>{
   console.log(req.body)
   var url = req.body.url
   var host = url.replace(/^https?:\/\//,'')
-  saveNewUrl(host, (data)=> {
-      res.json({short_url: data.short_url, original_url: data.original_url})
-    })
-  /**
-  if (isValidHost(host)) {
-    
-  } else {
-     res.json({error: "invalid URL"}) 
-  }
-  */
   
+  hostnameExists(host).then(status => {
+    if (status) {
+        saveNewUrl(url, (data)=> {
+        res.json({short_url: data.short_url, original_url: data.original_url})
+      })
+    } else {
+      res.json({error: "invalid URL"}) 
+    }
+  })
 })
-
 
 // Get the short Url
 var findByShort = db.findUrlByShort
 app.get("/api/shorturl/:short", (req, res, next) => {
   findByShort(req.params.short, (data) => {
-    console.log(data)
-    //res.json({short_url: data.short_url, original_url: data.original_url})
-    res.redirect("http://" + data.original_url)
-    
+    res.redirect(""+ data.original_url)
   })
 })
 

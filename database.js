@@ -18,14 +18,13 @@ function nextShortUrl(){
 });
 }
 
-// validate orig_url befor sending to this method
+// validate orig_url before sending to this method
 var createAndSaveUrl = (orig_url, done) => {
-  console.log("In save URL:" + orig_url)
   Url.estimatedDocumentCount({}).then(count => {
     var url =  new Url({short_url: `${count+1}`,original_url: orig_url})
     url.save((err,data) => {
        if (err) return done(err)
-       console.log("Saved" + data)
+      
        done(data)
      })
   })
